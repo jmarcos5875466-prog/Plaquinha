@@ -1,0 +1,2256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de Placas de Preço</title>
+
+<style>
+:root {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #171717;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f3f4f6;
+}
+
+.app {
+  width: 100%;
+  margin: 0;
+  padding: 24px clamp(18px, 2.2vw, 36px) 40px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: clamp(24px, 4vw, 34px);
+}
+
+.subtitle {
+  margin: 0 0 24px;
+  color: #555;
+}
+
+.mode-switch {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 22px;
+  padding: 6px;
+  width: fit-content;
+  max-width: 100%;
+  background: #e5e7eb;
+  border: 1px solid #d1d5db;
+  border-radius: 13px;
+}
+
+.mode-button {
+  min-width: 130px;
+  padding: 11px 22px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #333;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mode-button[aria-pressed="true"] {
+  background: #111;
+  color: #fff;
+  box-shadow: 0 2px 7px #00000020;
+}
+
+.mode-screen[hidden] {
+  display: none !important;
+}
+
+.layout,
+.offer-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+  width: 100%;
+}
+
+.panel,
+.preview-panel {
+  background: #fff;
+  border: 1px solid #dedede;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 18px #00000008;
+  min-width: 0;
+}
+
+label {
+  display: block;
+  font-weight: 700;
+  font-size: 14px;
+  margin: 0 0 7px;
+}
+
+input,
+select {
+  width: 100%;
+  border: 1px solid #c8c8c8;
+  border-radius: 9px;
+  padding: 12px 13px;
+  font: inherit;
+  margin-bottom: 16px;
+  background: #fff;
+}
+
+input:focus,
+select:focus {
+  outline: 2px solid #777;
+  outline-offset: 1px;
+}
+
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 12px 14px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(.92);
+}
+
+.primary {
+  background: #111;
+  color: #fff;
+}
+
+.secondary {
+  background: #e9e9e9;
+  color: #111;
+}
+
+.buttons,
+.offer-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.product-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.product-row {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 8px;
+  min-width: 0;
+}
+
+.row-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #666;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.remove-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 5px;
+  background: #e9e9e9;
+  color: #111;
+  flex: 0 0 20px;
+}
+
+.product-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 100px 92px;
+  gap: 8px;
+  align-items: end;
+}
+
+.product-fields .field {
+  min-width: 0;
+}
+
+.product-fields label {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.product-fields input,
+.product-fields select {
+  margin: 0;
+  padding: 9px 8px;
+  min-width: 0;
+  width: 100%;
+  font-size: 14px;
+}
+
+.row-actions {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 14px;
+}
+
+.row-actions button {
+  flex: 1;
+}
+
+.hint {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.5;
+  margin: 16px 0 0;
+}
+
+.preview-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.preview-heading h2 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.preview-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.preview-nav button {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.preview-nav button:disabled {
+  opacity: .45;
+  cursor: default;
+  filter: none;
+}
+
+.page-dimensions,
+.tagline {
+  font-size: 12px;
+  color: #666;
+}
+
+.canvas-wrap,
+.offer-canvas-wrap {
+  background: #dfe2e6 !important;
+  border: 1px solid #c6cbd1;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  height: min(72vh, 760px);
+  overflow: auto;
+}
+
+.preview-list,
+.offer-preview-list {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  justify-items: center;
+}
+
+.preview-item,
+.offer-preview-item {
+  width: 100%;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  height: calc(72vh - 120px);
+  min-height: 240px;
+  overflow: hidden;
+}
+
+.preview-item.active,
+.offer-preview-item.active {
+  display: flex;
+}
+
+.preview-item canvas,
+.offer-preview-item canvas {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border: 1px solid #aeb4bc;
+  box-shadow: 0 4px 14px #00000030;
+  flex: 0 0 auto;
+  background: #fff;
+}
+
+.status {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+.offer-settings {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+#printPages {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .product-fields {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(80px, .7fr)
+      minmax(88px, .75fr);
+    gap: 6px;
+  }
+}
+
+@media (max-width: 760px) {
+  .app {
+    padding: 18px 12px 28px;
+  }
+
+  .layout,
+  .offer-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .canvas-wrap,
+  .offer-canvas-wrap {
+    min-height: 180px;
+  }
+}
+
+@media (max-width: 520px) {
+  .mode-switch {
+    width: 100%;
+  }
+
+  .mode-button {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 14px;
+  }
+
+  .product-fields {
+    grid-template-columns: minmax(0, 1fr) 92px;
+  }
+
+  .unit-field {
+    grid-column: 1 / -1;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .app > h1,
+  .mode-switch,
+  .subtitle,
+  .panel,
+  .preview-heading,
+  .status {
+    display: none !important;
+  }
+
+  .app {
+    padding: 0;
+    margin: 0;
+  }
+
+  .mode-screen[hidden] {
+    display: none !important;
+  }
+
+  .layout,
+  .offer-layout {
+    display: block;
+  }
+
+  .preview-panel {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .canvas-wrap,
+  .offer-canvas-wrap,
+  .tagline {
+    display: none !important;
+  }
+
+  #printPages {
+    display: block !important;
+  }
+
+  .print-page {
+    width: 100%;
+    height: 100%;
+    page-break-after: always;
+    break-after: page;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .print-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .print-page canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    max-width: none;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  body.print-portrait @page {
+    size: A4 portrait;
+  }
+}
+</style>
+</head>
+
+<body>
+<main class="app">
+
+  <h1>Gerador de Placas de Preço</h1>
+
+  <div class="mode-switch" role="group" aria-label="Escolher modo">
+    <button
+      type="button"
+      class="mode-button"
+      id="modePlaquinha"
+      aria-pressed="true">
+      Plaquinha
+    </button>
+
+    <button
+      type="button"
+      class="mode-button"
+      id="modeOferta"
+      aria-pressed="false">
+      Oferta
+    </button>
+
+    <button
+      type="button"
+      class="mode-button"
+      id="modePromocao"
+      aria-pressed="false">
+      Promoção
+    </button>
+  </div>
+
+  <!-- ================= PLAQUINHA ================= -->
+
+  <section id="screenPlaquinha" class="mode-screen">
+
+    <p class="subtitle">
+      Crie placas de preço prontas para imprimir ou exportar em PDF.
+    </p>
+
+    <div class="layout">
+
+      <section class="panel">
+
+        <div id="productList" class="product-list"></div>
+
+        <div class="row-actions">
+          <button
+            type="button"
+            class="secondary"
+            id="addProduct">
+            ＋ Adicionar produto
+          </button>
+        </div>
+
+        <label for="pageCount">
+          Placas por folha A4
+        </label>
+
+        <select id="pageCount">
+          <option value="1">1 placa por folha</option>
+          <option value="2">2 placas por folha</option>
+          <option value="4">4 placas por folha</option>
+        </select>
+
+        <label for="paperColor">
+          Cor do papel na prévia
+        </label>
+
+        <select id="paperColor">
+          <option value="white">Branco</option>
+          <option value="yellow">Amarelo</option>
+        </select>
+
+        <div class="buttons">
+          <button class="primary" id="print">
+            IMPRIMIR
+          </button>
+
+          <button class="secondary" id="downloadPdf">
+            EXPORTAR EM PDF
+          </button>
+        </div>
+
+        <p class="hint">
+          Cadastre os produtos, escolha a quantidade por folha e
+          imprima ou exporte as placas em PDF.
+        </p>
+
+      </section>
+
+      <section class="preview-panel">
+
+        <div class="preview-heading">
+          <h2>Pré-visualização</h2>
+
+          <div class="preview-nav">
+            <button
+              type="button"
+              class="secondary"
+              id="prevPage"
+              disabled>
+              ↑ Anterior
+            </button>
+
+            <span id="pageIndicator">Folha 1 / 1</span>
+
+            <button
+              type="button"
+              class="secondary"
+              id="nextPage"
+              disabled>
+              Próxima ↓
+            </button>
+          </div>
+
+          <span
+            class="page-dimensions"
+            id="pageDimensions">
+            A4 horizontal • 297 × 210 mm
+          </span>
+        </div>
+
+        <div class="canvas-wrap" id="canvasWrap">
+          <div id="previewList" class="preview-list"></div>
+        </div>
+
+        <div class="status" id="status">
+          Aguardando produtos.
+        </div>
+
+      </section>
+
+    </div>
+  </section>
+
+
+  <!-- ================= OFERTA ================= -->
+
+  <section
+    id="screenOferta"
+    class="mode-screen"
+    hidden>
+
+    <p class="subtitle">
+      Crie ofertas com o título fixo “OFERTA DO DIA”.
+      O modelo mantém exatamente as dimensões da Plaquinha.
+    </p>
+
+    <div class="offer-layout">
+
+      <section class="panel">
+
+        <div
+          id="offerProductList"
+          class="product-list">
+        </div>
+
+        <div class="row-actions">
+          <button
+            type="button"
+            class="secondary"
+            id="addOfferProduct">
+            ＋ Adicionar produto
+          </button>
+        </div>
+
+        <div class="offer-settings">
+
+          <label for="offerPageCount">
+            Ofertas por folha A4
+          </label>
+
+          <select id="offerPageCount">
+            <option value="1">1 plaquinha por folha</option>
+            <option value="2">2 plaquinhas por folha</option>
+            <option value="4">4 plaquinhas por folha</option>
+          </select>
+
+          <div hidden>
+            <label for="offerModel">Modelo</label>
+            <select id="offerModel">
+              <option value="day">Oferta do Dia</option>
+              <option value="promo">Promoção</option>
+            </select>
+          </div>
+
+          <label for="offerPaperColor">Cor do fundo</label>
+          <select id="offerPaperColor">
+            <option value="white">Branco</option>
+            <option value="yellow">Amarelo</option>
+          </select>
+
+        </div>
+
+        <div class="offer-actions">
+
+          <button
+            type="button"
+            class="primary"
+            id="printOffer">
+            IMPRIMIR OFERTA
+          </button>
+
+          <button
+            type="button"
+            class="secondary"
+            id="downloadOfferPdf">
+            EXPORTAR OFERTA EM PDF
+          </button>
+
+        </div>
+
+        <p class="hint">
+          A Oferta utiliza a mesma largura, altura e moldura da
+          Plaquinha. O título “OFERTA DO DIA” é fixo e não existem
+          opções de unidade UN, KG ou BDJ.
+        </p>
+
+      </section>
+
+      <section class="preview-panel">
+
+        <div class="preview-heading">
+
+          <h2>Pré-visualização</h2>
+
+          <div class="preview-nav">
+
+            <button
+              type="button"
+              class="secondary"
+              id="prevOfferPage"
+              disabled>
+              ↑ Anterior
+            </button>
+
+            <span id="offerPageIndicator">
+              Folha 1 / 1
+            </span>
+
+            <button
+              type="button"
+              class="secondary"
+              id="nextOfferPage"
+              disabled>
+              Próxima ↓
+            </button>
+
+          </div>
+
+          <span
+            class="page-dimensions"
+            id="offerPageDimensions">
+            A4 horizontal • 297 × 210 mm
+          </span>
+
+        </div>
+
+        <div
+          class="offer-canvas-wrap"
+          id="offerCanvasWrap">
+
+          <div
+            class="offer-preview-list"
+            id="offerPreviewList">
+          </div>
+
+        </div>
+
+        <div class="status" id="offerStatus">
+          Aguardando ofertas.
+        </div>
+
+      </section>
+
+    </div>
+  </section>
+
+  <div id="printPages"></div>
+
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const modePlaquinhaButton = $('modePlaquinha');
+const modeOfertaButton = $('modeOferta');
+const modePromocaoButton = $('modePromocao');
+
+const screenPlaquinha = $('screenPlaquinha');
+const screenOferta = $('screenOferta');
+
+let currentMode = 'plaquinha';
+
+function selectMode(mode) {
+  // Salva a cor do modo anterior antes de trocar de tela.
+  if (typeof offerPaperColorInput !== 'undefined' &&
+      (currentMode === 'oferta' || currentMode === 'promocao')) {
+    offerPaperColorByMode[currentMode] = offerPaperColorInput.value;
+  }
+
+  currentMode = mode;
+
+  const isPlaquinha = mode === 'plaquinha';
+  const isPromocao = mode === 'promocao';
+
+  screenPlaquinha.hidden = !isPlaquinha;
+  screenOferta.hidden = isPlaquinha;
+
+  modePlaquinhaButton.setAttribute('aria-pressed', String(isPlaquinha));
+  modeOfertaButton.setAttribute('aria-pressed', String(mode === 'oferta'));
+  modePromocaoButton.setAttribute('aria-pressed', String(isPromocao));
+
+  // Oferta e Promoção têm desenho e cor independentes.
+  offerModelInput.value = isPromocao ? 'promo' : 'day';
+  if (mode === 'oferta' || mode === 'promocao') {
+    offerPaperColorInput.value = offerPaperColorByMode[mode] || 'white';
+  }
+  const subtitle = screenOferta.querySelector('.subtitle');
+  const title = screenOferta.querySelector('.offer-settings label[for="offerPageCount"]');
+  const printButton = $('printOffer');
+  const pdfButton = $('downloadOfferPdf');
+  const hint = screenOferta.querySelector('.hint');
+
+  if (isPromocao) {
+    subtitle.textContent = 'Crie placas de promoção com o desenho em formato de explosão. Mesmo tamanho da Plaquinha, com fundo amarelo ou branco.';
+    printButton.textContent = 'IMPRIMIR';
+    pdfButton.textContent = 'EXPORTAR EM PDF';
+    hint.textContent = 'A Promoção usa o desenho de explosão, com faixa preta “Promoção”, e mantém as dimensões da Plaquinha. Escolha fundo amarelo ou branco.';
+  } else {
+    subtitle.textContent = 'Crie ofertas com o título fixo “OFERTA DO DIA”. O modelo mantém exatamente as dimensões da Plaquinha.';
+    printButton.textContent = 'IMPRIMIR';
+    pdfButton.textContent = 'EXPORTAR EM PDF';
+    hint.textContent = 'A Oferta usa o modelo “OFERTA DO DIA” e mantém as dimensões da Plaquinha. Escolha fundo amarelo ou branco.';
+  }
+
+  if (title) title.textContent = isPromocao ? 'Promoções por folha A4' : 'Ofertas por folha A4';
+  currentOfferPage = 0;
+  drawSign();
+  drawOffer();
+}
+
+modePlaquinhaButton.addEventListener('click', () => selectMode('plaquinha'));
+modeOfertaButton.addEventListener('click', () => selectMode('oferta'));
+modePromocaoButton.addEventListener('click', () => selectMode('promocao'));
+
+
+// ================= FUNÇÕES COMPARTILHADAS =================
+
+function roundedRect(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+}
+
+
+function fitText(
+  text,
+  maxWidth,
+  startSize,
+  minSize,
+  weight = '900',
+  targetCtx
+) {
+  const c = targetCtx;
+  let size = startSize;
+
+  do {
+    c.font =
+      `${weight} ${size}px Arial, Helvetica, sans-serif`;
+
+    if (c.measureText(text).width <= maxWidth) {
+      return size;
+    }
+
+    size -= 2;
+
+  } while (size >= minSize);
+
+  return minSize;
+}
+
+
+function normalizePrice(raw) {
+  let value = String(raw || '')
+    .trim()
+    .replace(/^R\$\s*/i, '')
+    .replace(/\s/g, '');
+
+  if (!value) return '';
+
+  if (value.includes(',') && value.includes('.')) {
+    value = value.replace(/\./g, '').replace(',', '.');
+  } else if (value.includes(',')) {
+    value = value.replace(',', '.');
+  }
+
+  const number = Number(value);
+
+  if (!Number.isFinite(number) || number < 0) {
+    return null;
+  }
+
+  return number.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+
+// ================= DESENHO DA PLAQUINHA =================
+
+const productList = $('productList');
+const pageCountInput = $('pageCount');
+const paperColorInput = $('paperColor');
+const previewList = $('previewList');
+const printPages = $('printPages');
+const statusEl = $('status');
+
+let productCounter = 0;
+let currentPreviewPage = 0;
+
+
+function activeProducts() {
+  return [
+    ...productList.querySelectorAll('.product-row')
+  ].map(row => ({
+    name: row.querySelector('.product-name').value.trim(),
+    priceRaw: row.querySelector('.product-price').value,
+    price: normalizePrice(
+      row.querySelector('.product-price').value
+    ),
+    unit: row.querySelector('.product-unit').value
+  })).filter(p => p.name || p.priceRaw.trim());
+}
+
+
+function addProduct(name = '', price = '') {
+  productCounter++;
+
+  const row = document.createElement('div');
+  row.className = 'product-row';
+
+  row.innerHTML = `
+    <div class="row-title">
+      <button
+        type="button"
+        class="remove-row"
+        aria-label="Remover produto">
+        −
+      </button>
+
+      <span>PRODUTO ${productCounter}</span>
+    </div>
+
+    <div class="product-fields">
+
+      <div class="field">
+        <label>Nome</label>
+        <input
+          class="product-name"
+          type="text"
+          maxlength="80"
+          placeholder="Ex.: ARROZ 5KG"
+          autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label>Preço (R$)</label>
+        <input
+          class="product-price"
+          type="text"
+          inputmode="decimal"
+          placeholder="24,90"
+          autocomplete="off">
+      </div>
+
+      <div class="field unit-field">
+        <label>Unidade</label>
+
+        <select class="product-unit">
+          <option value="">Nenhuma</option>
+          <option value="BDJ.">BDJ.</option>
+          <option value="KG">KG</option>
+          <option value="UN">UN</option>
+        </select>
+      </div>
+
+    </div>
+  `;
+
+  row.querySelector('.product-name').value = name;
+  row.querySelector('.product-price').value = price;
+
+  row.querySelector('.remove-row').addEventListener(
+    'click',
+    () => {
+      if (
+        productList.querySelectorAll('.product-row').length > 1
+      ) {
+        row.remove();
+        renumberProducts();
+        currentPreviewPage = 0;
+        drawSign();
+      }
+    }
+  );
+
+  row.querySelectorAll('input, select').forEach(input => {
+    input.addEventListener('input', drawSign);
+    input.addEventListener('change', drawSign);
+  });
+
+  productList.appendChild(row);
+  renumberProducts();
+  drawSign();
+}
+
+
+function renumberProducts() {
+  [
+    ...productList.querySelectorAll('.product-row')
+  ].forEach((row, index) => {
+    row.querySelector('.row-title span').textContent =
+      `PRODUTO ${index + 1}`;
+  });
+}
+
+
+// Moldura e conteúdo da Plaquinha
+function drawOneSign(c, product, isPreview = false) {
+  const W = 1800;
+  const H = 1050;
+
+  c.clearRect(0, 0, W, H);
+
+  // A cor amarela é apenas para a prévia. Impressão e PDF sempre usam branco.
+  c.fillStyle = isPreview && (isPreview && paperColorInput.value === 'yellow')
+    ? '#EED73B'
+    : '#fff';
+  c.fillRect(0, 0, W, H);
+
+  const px = 38;
+  const py = 38;
+  const pw = W - 76;
+  const ph = H - 76;
+  const r = 110;
+
+  // Moldura externa
+  c.lineWidth = 5;
+  c.strokeStyle = '#000';
+
+  roundedRect(c, px, py, pw, ph, r);
+  c.stroke();
+
+  // Faixa superior
+  const ix = px + 25;
+  const iy = py + 24;
+  const iw = pw - 50;
+  const ih = ph - 48;
+  const ir = 100;
+
+  c.fillStyle = '#000';
+
+  roundedRect(c, ix, iy, iw, ih, ir);
+  c.fill();
+
+  const dividerY = iy + ih * 0.43;
+
+  const inset = 19;
+  const left = ix + inset;
+  const right = ix + iw - inset;
+  const bottom = iy + ih - inset;
+  const bottomRadius = 82;
+
+  c.save();
+
+  roundedRect(c, ix, iy, iw, ih, ir);
+  c.clip();
+
+  c.fillStyle =
+    (isPreview && paperColorInput.value === 'yellow')
+      ? '#EED73B'
+      : '#fff';
+
+  c.beginPath();
+
+  c.moveTo(left, dividerY);
+  c.lineTo(right, dividerY);
+  c.lineTo(right, bottom - bottomRadius);
+
+  c.arcTo(
+    right,
+    bottom,
+    right - bottomRadius,
+    bottom,
+    bottomRadius
+  );
+
+  c.lineTo(left + bottomRadius, bottom);
+
+  c.arcTo(
+    left,
+    bottom,
+    left,
+    bottom - bottomRadius,
+    bottomRadius
+  );
+
+  c.closePath();
+  c.fill();
+
+  c.restore();
+
+  const title = (
+    product.name || 'NOME DO PRODUTO'
+  ).toLocaleUpperCase('pt-BR');
+
+  const titleMaxW = iw - 105;
+
+  const titleSize = fitText(
+    title,
+    titleMaxW,
+    230,
+    48,
+    '900',
+    c
+  );
+
+  c.font =
+    `900 ${titleSize}px Arial, Helvetica, sans-serif`;
+
+  c.fillStyle =
+    (isPreview && paperColorInput.value === 'yellow')
+      ? '#EED73B'
+      : '#fff';
+
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+
+  c.fillText(
+    title,
+    ix + iw / 2,
+    iy + (dividerY - iy) / 2 + 5,
+    titleMaxW
+  );
+
+  // Divisória
+  c.fillStyle = '#000';
+
+  c.fillRect(
+    ix + 15,
+    dividerY - 5,
+    iw - 30,
+    10
+  );
+
+  // Preço
+  const lowerTop = dividerY + 22;
+  const lowerBottom = iy + ih - 28;
+  const baseY = (lowerTop + lowerBottom) / 2;
+
+  c.fillStyle = '#000';
+  c.textAlign = 'left';
+  c.textBaseline = 'middle';
+
+  const rsSize = fitText(
+    'R$',
+    360,
+    205,
+    100,
+    '900',
+    c
+  );
+
+  c.font =
+    `900 ${rsSize}px Arial, Helvetica, sans-serif`;
+
+  c.fillText(
+    'R$',
+    ix + inset + 10,
+    baseY + 12
+  );
+
+  const rsWidth = c.measureText('R$').width;
+
+  const priceX = ix + inset + 10 + rsWidth + 24;
+
+  const unit = product.unit || '';
+  const unitReserve = unit ? 270 : 0;
+
+  const priceMaxW =
+    ix + iw - inset - 20 - priceX - unitReserve;
+
+  const price = product.price || '0,00';
+
+  const priceSize = fitText(
+    price,
+    priceMaxW,
+    350,
+    90,
+    '900',
+    c
+  );
+
+  c.font =
+    `900 ${priceSize}px Arial, Helvetica, sans-serif`;
+
+  c.fillText(
+    price,
+    priceX,
+    baseY + 12,
+    priceMaxW
+  );
+
+  if (unit) {
+    const unitSize = fitText(
+      unit,
+      190,
+      92,
+      58,
+      '900',
+      c
+    );
+
+    c.font =
+      `900 ${unitSize}px Arial, Helvetica, sans-serif`;
+
+    c.textAlign = 'right';
+    c.textBaseline = 'alphabetic';
+
+    c.fillText(
+      unit,
+      ix + iw - inset - 78,
+      iy + ih - 88,
+      190
+    );
+  }
+}
+
+
+// Gera uma folha A4 com 1, 2 ou 4 placas
+function renderSheet(targetCanvas, products, count, isPreview = false) {
+  const c = targetCanvas.getContext('2d');
+
+  const landscape = count !== 2;
+
+  targetCanvas.width = landscape ? 3508 : 2480;
+  targetCanvas.height = landscape ? 2480 : 3508;
+
+  // A folha A4 só mostra amarelo na prévia; impressão e PDF sempre ficam brancos.
+  c.fillStyle = isPreview && paperColorInput.value === 'yellow'
+    ? '#EED73B'
+    : '#fff';
+
+  c.fillRect(
+    0,
+    0,
+    targetCanvas.width,
+    targetCanvas.height
+  );
+
+  const margin = 12;
+  const gap = 8;
+
+  const cols = count === 4 ? 2 : 1;
+  const rows = count === 1 ? 1 : 2;
+
+  const cellW =
+    (
+      targetCanvas.width -
+      margin * 2 -
+      gap * (cols - 1)
+    ) / cols;
+
+  const cellH =
+    (
+      targetCanvas.height -
+      margin * 2 -
+      gap * (rows - 1)
+    ) / rows;
+
+  products.slice(0, count).forEach((product, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+
+    const x = margin + col * (cellW + gap);
+    const y = margin + row * (cellH + gap);
+
+    const scale = Math.min(
+      cellW / 1800,
+      cellH / 1050
+    );
+
+    const w = 1800 * scale;
+    const h = 1050 * scale;
+
+    c.save();
+
+    c.translate(
+      x + (cellW - w) / 2,
+      y + (cellH - h) / 2
+    );
+
+    c.scale(scale, scale);
+
+    drawOneSign(c, product, isPreview);
+
+    c.restore();
+  });
+
+  return landscape;
+}
+
+
+function drawSign() {
+  if (!productList) return;
+
+  const products = activeProducts();
+  const count = Number(pageCountInput.value);
+
+  const pages = [];
+
+  for (let i = 0; i < products.length; i += count) {
+    pages.push(products.slice(i, i + count));
+  }
+
+  if (!pages.length) {
+    pages.push([{ name: '', price: '', unit: '' }]);
+  }
+
+  previewList.innerHTML = '';
+
+  pages.forEach((pageProducts, index) => {
+    const item = document.createElement('div');
+
+    item.className =
+      'preview-item' +
+      (index === currentPreviewPage ? ' active' : '');
+
+    const cv = document.createElement('canvas');
+
+    cv.setAttribute(
+      'aria-label',
+      `Prévia da folha ${index + 1}`
+    );
+
+    item.appendChild(cv);
+    previewList.appendChild(item);
+
+    renderSheet(cv, pageProducts, count, true);
+  });
+
+  currentPreviewPage = Math.min(
+    currentPreviewPage,
+    pages.length - 1
+  );
+
+  updatePreviewNavigation(pages.length);
+
+  $('canvasWrap').style.setProperty(
+    'background',
+    '#dfe2e6',
+    'important'
+  );
+
+  statusEl.textContent =
+    `${products.length} produto(s) cadastrado(s). ` +
+    `${pages.length} folha(s) A4 no total.`;
+}
+
+
+function updatePreviewNavigation(totalPages) {
+  [
+    ...previewList.querySelectorAll('.preview-item')
+  ].forEach((item, index) => {
+    item.classList.toggle(
+      'active',
+      index === currentPreviewPage
+    );
+  });
+
+  $('pageIndicator').textContent =
+    `Folha ${currentPreviewPage + 1} / ${totalPages}`;
+
+  $('prevPage').disabled = currentPreviewPage <= 0;
+
+  $('nextPage').disabled =
+    currentPreviewPage >= totalPages - 1;
+
+  const landscape = Number(pageCountInput.value) !== 2;
+
+  $('pageDimensions').textContent = landscape
+    ? 'A4 horizontal • 297 × 210 mm'
+    : 'A4 vertical • 210 × 297 mm';
+}
+
+
+$('prevPage').addEventListener('click', () => {
+  currentPreviewPage = Math.max(0, currentPreviewPage - 1);
+  drawSign();
+});
+
+
+$('nextPage').addEventListener('click', () => {
+  const total = Math.ceil(
+    Math.max(1, activeProducts().length) /
+    Number(pageCountInput.value)
+  );
+
+  currentPreviewPage = Math.min(
+    total - 1,
+    currentPreviewPage + 1
+  );
+
+  drawSign();
+});
+
+
+$('addProduct').addEventListener('click', () => {
+  addProduct();
+});
+
+
+pageCountInput.addEventListener('change', () => {
+  currentPreviewPage = 0;
+  drawSign();
+});
+
+
+paperColorInput.addEventListener('change', drawSign);
+
+
+// ================= DESENHO DA OFERTA =================
+
+const offerList = $('offerProductList');
+const offerPageCountInput = $('offerPageCount');
+const offerModelInput = $('offerModel');
+const offerPaperColorInput = $('offerPaperColor');
+// A cor escolhida em Oferta não altera Promoção (e vice-versa).
+const offerPaperColorByMode = { oferta: 'white', promocao: 'white' };
+const offerPreviewList = $('offerPreviewList');
+const offerCanvasWrap = $('offerCanvasWrap');
+const offerStatus = $('offerStatus');
+
+let offerCounter = 0;
+let currentOfferPage = 0;
+
+
+function offerProducts() {
+  return [
+    ...offerList.querySelectorAll('.product-row')
+  ].map(row => ({
+    name: row.querySelector('.offer-name').value.trim(),
+    priceRaw: row.querySelector('.offer-price').value,
+    price: normalizePrice(
+      row.querySelector('.offer-price').value
+    )
+  })).filter(p => p.name || p.priceRaw.trim());
+}
+
+
+function addOfferProduct(name = '', price = '') {
+  offerCounter++;
+
+  const row = document.createElement('div');
+
+  row.className = 'product-row';
+
+  row.innerHTML = `
+    <div class="row-title">
+
+      <button
+        type="button"
+        class="remove-row"
+        aria-label="Remover oferta">
+        −
+      </button>
+
+      <span>OFERTA ${offerCounter}</span>
+
+    </div>
+
+    <div
+      class="product-fields"
+      style="grid-template-columns:minmax(0,1fr) 120px">
+
+      <div class="field">
+        <label>Nome do produto</label>
+
+        <input
+          class="offer-name"
+          type="text"
+          maxlength="80"
+          placeholder="Ex.: ARROZ 5KG"
+          autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label>Preço (R$)</label>
+
+        <input
+          class="offer-price"
+          type="text"
+          inputmode="decimal"
+          placeholder="24,90"
+          autocomplete="off">
+      </div>
+
+    </div>
+  `;
+
+  row.querySelector('.offer-name').value = name;
+  row.querySelector('.offer-price').value = price;
+
+  row.querySelector('.remove-row').addEventListener(
+    'click',
+    () => {
+      if (
+        offerList.querySelectorAll('.product-row').length > 1
+      ) {
+        row.remove();
+        renumberOffers();
+        currentOfferPage = 0;
+        drawOffer();
+      }
+    }
+  );
+
+  row.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', drawOffer);
+  });
+
+  offerList.appendChild(row);
+
+  renumberOffers();
+  drawOffer();
+}
+
+
+function renumberOffers() {
+  [
+    ...offerList.querySelectorAll('.product-row')
+  ].forEach((row, index) => {
+    row.querySelector('.row-title span').textContent =
+      `OFERTA ${index + 1}`;
+  });
+}
+
+
+// Os dois modelos de Oferta usam exatamente a proporção da Plaquinha.
+function drawOfferTo(c, product, isPrinting = false) {
+  const W = 1800;
+  const H = 1050;
+  // Fundo amarelo apenas no preview; saída para imprimir/PDF é sempre branca.
+  const yellow = !isPrinting && offerPaperColorInput.value === 'yellow';
+  const paper = yellow ? '#EED73B' : '#FFFFFF';
+  const model = offerModelInput.value;
+
+  c.clearRect(0, 0, W, H);
+  c.fillStyle = paper;
+  c.fillRect(0, 0, W, H);
+
+  const name = (product?.name || 'NOME DO PRODUTO')
+    .trim().toLocaleUpperCase('pt-BR');
+  const price = product?.price || '0,00';
+
+  if (model === 'promo') {
+    // Modelo 2: formato de explosão inspirado diretamente na imagem de referência.
+    // Mantém as pontas grandes e irregulares e não adiciona borda externa.
+    const points = [
+      [0.435,0.018],[0.475,0.115],[0.535,0.020],[0.575,0.145],
+      [0.685,0.025],[0.680,0.185],[0.825,0.065],[0.815,0.245],
+      [0.985,0.145],[0.865,0.325],[0.995,0.335],[0.875,0.455],
+      [0.995,0.505],[0.865,0.600],[0.975,0.720],[0.825,0.755],
+      [0.910,0.940],[0.760,0.855],[0.730,0.985],[0.640,0.860],
+      [0.560,0.985],[0.490,0.865],[0.415,0.985],[0.350,0.860],
+      [0.235,0.975],[0.215,0.845],[0.050,0.955],[0.125,0.790],
+      [0.025,0.800],[0.120,0.650],[0.020,0.590],[0.125,0.510],
+      [0.025,0.455],[0.130,0.375],[0.030,0.295],[0.150,0.265],
+      [0.080,0.145],[0.230,0.185],[0.245,0.070],[0.350,0.155]
+    ];
+    c.beginPath();
+    points.forEach(([x,y], i) => i ? c.lineTo(x*W,y*H) : c.moveTo(x*W,y*H));
+    c.closePath();
+    c.fillStyle = paper;
+    c.fill();
+    c.lineWidth = 16;
+    c.strokeStyle = '#000';
+    c.lineJoin = 'miter';
+    c.stroke();
+
+    // Faixa decorativa com curva e pontas semelhantes à faixa da referência.
+    // A faixa ocupa a parte superior esquerda, sem encobrir o centro do produto.
+    c.save();
+    c.beginPath();
+    c.moveTo(55, 165);
+    c.bezierCurveTo(55, 95, 180, 45, 345, 60);
+    c.bezierCurveTo(435, 65, 545, 105, 650, 125);
+    c.lineTo(690, 45);
+    c.lineTo(755, 120);
+    c.lineTo(820, 120);
+    c.lineTo(890, 25);
+    c.lineTo(940, 88);
+    c.lineTo(1035, 25);
+    c.lineTo(1020, 265);
+    c.bezierCurveTo(920, 350, 760, 365, 610, 335);
+    c.bezierCurveTo(470, 305, 360, 300, 270, 310);
+    c.lineTo(325, 370);
+    c.lineTo(215, 325);
+    c.lineTo(65, 405);
+    c.closePath();
+    c.fillStyle = '#000';
+    c.fill();
+
+    // Filete curvo superior característico da faixa original.
+    c.beginPath();
+    c.moveTo(85, 150);
+    c.bezierCurveTo(175, 65, 315, 55, 445, 85);
+    c.bezierCurveTo(325, 78, 200, 95, 85, 150);
+    c.closePath();
+    c.fillStyle = paper;
+    c.fill();
+
+    c.fillStyle = paper;
+    c.textAlign = 'left';
+    c.textBaseline = 'middle';
+    c.font = '900 142px Georgia, "Times New Roman", serif';
+    c.fillText('Promoção', 105, 195, 890);
+    c.restore();
+
+    // Produto e preço ficam no centro livre da explosão.
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    const titleSize = fitText(name, 1250, 180, 52, '900', c);
+    c.font = `900 ${titleSize}px Arial, Helvetica, sans-serif`;
+    c.fillStyle = '#000';
+    c.fillText(name, W/2, 525, 1250);
+    c.lineWidth = 7;
+    c.strokeStyle = '#000';
+    c.beginPath();
+    // Linha mais curta para não encostar nas pontas irregulares da explosão.
+    c.moveTo(330, 640);
+    c.lineTo(W-330, 640);
+    c.stroke();
+    const priceSize = fitText(`R$ ${price}`, 1200, 205, 58, '900', c);
+    c.font = `900 ${priceSize}px Arial, Helvetica, sans-serif`;
+    c.fillText(`R$ ${price}`, W/2, 800, 1200);
+    return;
+  }
+
+  // Modelo 1: Oferta do Dia, com as mesmas dimensões da Plaquinha.
+  const px = 38, py = 38, pw = W - 76, ph = H - 76, r = 110;
+  c.lineWidth = 5;
+  c.strokeStyle = '#000';
+  roundedRect(c, px, py, pw, ph, r);
+  c.stroke();
+
+  const ix = px + 25, iy = py + 24, iw = pw - 50, ih = ph - 48, ir = 100;
+  c.fillStyle = paper;
+  roundedRect(c, ix, iy, iw, ih, ir);
+  c.fill();
+
+  const bandW = iw - 70;
+  const bandH = 76;
+  const bandX = ix + (iw - bandW) / 2;
+  const bandY = iy + 15;
+  const bandR = 30;
+  c.save();
+  roundedRect(c, ix, iy, iw, ih, ir);
+  c.clip();
+  c.fillStyle = '#000';
+  roundedRect(c, bandX, bandY, bandW, bandH, bandR);
+  c.fill();
+  c.restore();
+
+  c.fillStyle = paper;
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.font = '900 46px Arial, Helvetica, sans-serif';
+  c.fillText('OFERTA DO DIA', bandX + bandW / 2, bandY + bandH / 2);
+
+  const dividerY = iy + ih * 0.43;
+  const titleMaxW = iw - 105;
+  const titleMaxH = dividerY - iy - 42;
+  const titleSize = fitText(name, titleMaxW, Math.min(230, titleMaxH * 0.77), 48, '900', c);
+  c.fillStyle = '#000';
+  c.font = `900 ${titleSize}px Arial, Helvetica, sans-serif`;
+  c.fillText(name, ix + iw / 2, iy + (dividerY - iy) / 2 + 5, titleMaxW);
+  c.fillRect(ix + 15, dividerY - 5, iw - 30, 10);
+
+  const lowerTop = dividerY + 22;
+  const lowerBottom = iy + ih - 28;
+  const baseY = (lowerTop + lowerBottom) / 2;
+  const priceSize = fitText(`R$ ${price}`, iw - 100, 320, 90, '900', c);
+  c.font = `900 ${priceSize}px Arial, Helvetica, sans-serif`;
+  c.fillStyle = '#000';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText(`R$ ${price}`, ix + iw / 2, baseY + 12, iw - 100);
+}
+
+// Folha A4 para Oferta: mesma proporção, moldura e opções 1, 2 ou 4.
+function renderOfferSheet(targetCanvas, products, count, isPrinting = false) {
+  const c = targetCanvas.getContext('2d');
+  const landscape = count !== 2;
+
+  targetCanvas.width = landscape ? 3508 : 2480;
+  targetCanvas.height = landscape ? 2480 : 3508;
+
+  // A folha A4 só usa amarelo no preview; impressão e PDF sempre usam branco.
+  c.fillStyle = !isPrinting && offerPaperColorInput.value === 'yellow'
+    ? '#EED73B'
+    : '#fff';
+  c.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+
+  const margin = 12, gap = 8;
+  const cols = count === 4 ? 2 : 1;
+  const rows = count === 1 ? 1 : 2;
+  const cellW = (targetCanvas.width - margin * 2 - gap * (cols - 1)) / cols;
+  const cellH = (targetCanvas.height - margin * 2 - gap * (rows - 1)) / rows;
+
+  products.slice(0, count).forEach((product, i) => {
+    const col = i % cols, row = Math.floor(i / cols);
+    const x = margin + col * (cellW + gap);
+    const y = margin + row * (cellH + gap);
+    const scale = Math.min(cellW / 1800, cellH / 1050);
+    const w = 1800 * scale, h = 1050 * scale;
+
+    c.save();
+    c.translate(x + (cellW - w) / 2, y + (cellH - h) / 2);
+    c.scale(scale, scale);
+    drawOfferTo(c, product, isPrinting);
+    c.restore();
+  });
+
+  return landscape;
+}
+
+function drawOffer() {
+  if (!offerList) return;
+
+  const products = offerProducts();
+  const count = Number(offerPageCountInput.value);
+
+  const displayProducts = products.length
+    ? products
+    : [{ name: '', price: '' }];
+
+  const pages = [];
+
+  for (
+    let i = 0;
+    i < displayProducts.length;
+    i += count
+  ) {
+    pages.push(displayProducts.slice(i, i + count));
+  }
+
+  currentOfferPage = Math.min(
+    currentOfferPage,
+    pages.length - 1
+  );
+
+  offerPreviewList.innerHTML = '';
+
+  pages.forEach((pageProducts, index) => {
+    const item = document.createElement('div');
+
+    item.className =
+      'offer-preview-item' +
+      (index === currentOfferPage ? ' active' : '');
+
+    const cv = document.createElement('canvas');
+
+    cv.setAttribute(
+      'aria-label',
+      `Prévia da oferta na folha ${index + 1}`
+    );
+
+    item.appendChild(cv);
+    offerPreviewList.appendChild(item);
+
+    renderOfferSheet(cv, pageProducts, count);
+  });
+
+  $('offerPageIndicator').textContent =
+    `Folha ${currentOfferPage + 1} / ${pages.length}`;
+
+  $('prevOfferPage').disabled =
+    currentOfferPage <= 0;
+
+  $('nextOfferPage').disabled =
+    currentOfferPage >= pages.length - 1;
+
+  const landscape = count !== 2;
+
+  $('offerPageDimensions').textContent = landscape
+    ? 'A4 horizontal • 297 × 210 mm'
+    : 'A4 vertical • 210 × 297 mm';
+
+  offerCanvasWrap.style.setProperty(
+    'background',
+    '#dfe2e6',
+    'important'
+  );
+
+  offerStatus.textContent =
+    `${products.length} oferta(s) cadastrada(s). ` +
+    `${pages.length} folha(s) A4 no total.`;
+}
+
+
+// Navegação entre folhas de ofertas
+$('prevOfferPage').addEventListener('click', () => {
+  currentOfferPage = Math.max(
+    0,
+    currentOfferPage - 1
+  );
+
+  drawOffer();
+});
+
+
+$('nextOfferPage').addEventListener('click', () => {
+  const total = Math.ceil(
+    Math.max(1, offerProducts().length) /
+    Number(offerPageCountInput.value)
+  );
+
+  currentOfferPage = Math.min(
+    total - 1,
+    currentOfferPage + 1
+  );
+
+  drawOffer();
+});
+
+
+offerPageCountInput.addEventListener('change', () => {
+  currentOfferPage = 0;
+  drawOffer();
+});
+
+offerPaperColorInput.addEventListener('change', () => {
+  if (currentMode === 'oferta' || currentMode === 'promocao') {
+    offerPaperColorByMode[currentMode] = offerPaperColorInput.value;
+  }
+  drawOffer();
+});
+offerModelInput.addEventListener('change', drawOffer);
+
+
+$('addOfferProduct').addEventListener('click', () => {
+  addOfferProduct();
+});
+
+
+// ================= EXPORTAÇÃO PDF =================
+
+function makePdfFromCanvases(canvases, landscape) {
+  const pageW = landscape ? 841.89 : 595.28;
+  const pageH = landscape ? 595.28 : 841.89;
+
+  const encoder = new TextEncoder();
+  const chunks = [];
+  let total = 0;
+
+  const offsets = [0];
+
+  function add(part) {
+    const bytes = typeof part === 'string'
+      ? encoder.encode(part)
+      : part;
+
+    chunks.push(bytes);
+    total += bytes.length;
+  }
+
+  function jpegBytes(canvas) {
+    const flat = document.createElement('canvas');
+
+    flat.width = canvas.width;
+    flat.height = canvas.height;
+
+    const flatCtx = flat.getContext('2d');
+
+    flatCtx.fillStyle = '#fff';
+
+    flatCtx.fillRect(
+      0,
+      0,
+      flat.width,
+      flat.height
+    );
+
+    flatCtx.drawImage(canvas, 0, 0);
+
+    const data = flat
+      .toDataURL('image/jpeg', 0.98)
+      .split(',')[1];
+
+    const raw = atob(data);
+    const bytes = new Uint8Array(raw.length);
+
+    for (let i = 0; i < raw.length; i++) {
+      bytes[i] = raw.charCodeAt(i);
+    }
+
+    return bytes;
+  }
+
+  add('%PDF-1.4\n');
+
+  const objectCount = 2 + canvases.length * 3;
+
+  offsets[1] = total;
+
+  add(
+    '1 0 obj\n' +
+    '<< /Type /Catalog /Pages 2 0 R >>\n' +
+    'endobj\n'
+  );
+
+  offsets[2] = total;
+
+  const kids = canvases
+    .map((_, i) => `${3 + i * 3} 0 R`)
+    .join(' ');
+
+  add(
+    `2 0 obj\n` +
+    `<< /Type /Pages /Kids [${kids}] /Count ${canvases.length} >>\n` +
+    `endobj\n`
+  );
+
+  canvases.forEach((canvas, i) => {
+    const pageObj = 3 + i * 3;
+    const imageObj = pageObj + 1;
+    const contentObj = pageObj + 2;
+
+    const img = jpegBytes(canvas);
+
+    offsets[pageObj] = total;
+
+    add(
+      `${pageObj} 0 obj\n` +
+      `<< /Type /Page /Parent 2 0 R ` +
+      `/MediaBox [0 0 ${pageW} ${pageH}] ` +
+      `/Resources << /XObject << /Im${i + 1} ${imageObj} 0 R >> >> ` +
+      `/Contents ${contentObj} 0 R >>\n` +
+      `endobj\n`
+    );
+
+    offsets[imageObj] = total;
+
+    add(
+      `${imageObj} 0 obj\n` +
+      `<< /Type /XObject /Subtype /Image ` +
+      `/Width ${canvas.width} /Height ${canvas.height} ` +
+      `/ColorSpace /DeviceRGB /BitsPerComponent 8 ` +
+      `/Filter /DCTDecode /Length ${img.length} >>\n` +
+      `stream\n`
+    );
+
+    add(img);
+    add('\nendstream\nendobj\n');
+
+    const content =
+      `q\n` +
+      `${pageW} 0 0 ${pageH} 0 0 cm\n` +
+      `/Im${i + 1} Do\n` +
+      `Q\n`;
+
+    offsets[contentObj] = total;
+
+    add(
+      `${contentObj} 0 obj\n` +
+      `<< /Length ${encoder.encode(content).length} >>\n` +
+      `stream\n${content}endstream\nendobj\n`
+    );
+  });
+
+  const xrefOffset = total;
+
+  add(
+    `xref\n0 ${objectCount + 1}\n` +
+    '0000000000 65535 f \n'
+  );
+
+  for (let i = 1; i <= objectCount; i++) {
+    add(
+      `${String(offsets[i]).padStart(10, '0')} 00000 n \n`
+    );
+  }
+
+  add(
+    `trailer\n` +
+    `<< /Size ${objectCount + 1} /Root 1 0 R >>\n` +
+    `startxref\n${xrefOffset}\n%%EOF`
+  );
+
+  const pdf = new Uint8Array(total);
+  let pos = 0;
+
+  for (const chunk of chunks) {
+    pdf.set(chunk, pos);
+    pos += chunk.length;
+  }
+
+  return new Blob([pdf], {
+    type: 'application/pdf'
+  });
+}
+
+
+function downloadPdf(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+
+  a.href = url;
+  a.download = filename;
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
+
+
+function exportPlaquinhaPdf() {
+  const products = activeProducts();
+
+  if (!products.length) {
+    statusEl.textContent =
+      'Adicione pelo menos um produto antes de exportar.';
+
+    return;
+  }
+
+  const invalid = products.find(
+    p => !p.name || p.price === null || !p.price
+  );
+
+  if (invalid) {
+    statusEl.textContent =
+      'Confira o nome e o preço dos produtos.';
+
+    return;
+  }
+
+  const count = Number(pageCountInput.value);
+  const canvases = [];
+
+  for (let i = 0; i < products.length; i += count) {
+    const cv = document.createElement('canvas');
+
+    renderSheet(
+      cv,
+      products.slice(i, i + count),
+      count
+    );
+
+    canvases.push(cv);
+  }
+
+  downloadPdf(
+    makePdfFromCanvases(canvases, count !== 2),
+    'placas-de-preco.pdf'
+  );
+
+  statusEl.textContent =
+    `PDF exportado: ${products.length} produto(s).`;
+}
+
+
+function exportOfferPdf() {
+  const products = offerProducts();
+
+  if (!products.length) {
+    offerStatus.textContent =
+      'Adicione pelo menos uma oferta antes de exportar.';
+
+    return;
+  }
+
+  const invalid = products.find(
+    p => !p.name || p.price === null || !p.price
+  );
+
+  if (invalid) {
+    offerStatus.textContent =
+      'Preencha o nome e o preço de todas as ofertas.';
+
+    return;
+  }
+
+  const count = Number(offerPageCountInput.value);
+  const canvases = [];
+
+  for (let i = 0; i < products.length; i += count) {
+    const cv = document.createElement('canvas');
+
+    renderOfferSheet(
+      cv,
+      products.slice(i, i + count),
+      count,
+      true
+    );
+
+    canvases.push(cv);
+  }
+
+  downloadPdf(
+    makePdfFromCanvases(canvases, count !== 2),
+    offerModelInput.value === 'promo' ? 'ofertas-promocao.pdf' : 'ofertas-do-dia.pdf'
+  );
+
+  offerStatus.textContent =
+    `PDF exportado: ${products.length} oferta(s).`;
+}
+
+
+$('downloadPdf').addEventListener(
+  'click',
+  exportPlaquinhaPdf
+);
+
+$('downloadOfferPdf').addEventListener(
+  'click',
+  exportOfferPdf
+);
+
+
+// ================= IMPRESSÃO =================
+
+function printCanvases(canvases, landscape, title) {
+  // Imprime por um iframe temporário, sem abrir uma aba about:blank.
+  // Ao fechar a janela de impressão, o usuário continua no aplicativo.
+  const oldFrame = document.getElementById('print-frame-temporario');
+  if (oldFrame) oldFrame.remove();
+
+  const orientation = landscape ? 'landscape' : 'portrait';
+  const pagesHtml = canvases.map(cv => `
+    <section class="page"><img src="${cv.toDataURL('image/png')}" alt="Placa para impressão"></section>
+  `).join('');
+
+  const frame = document.createElement('iframe');
+  frame.id = 'print-frame-temporario';
+  frame.setAttribute('title', 'Preparação para impressão');
+  Object.assign(frame.style, {
+    position: 'fixed', right: '0', bottom: '0', width: '0', height: '0',
+    border: '0', visibility: 'hidden'
+  });
+  document.body.appendChild(frame);
+
+  const doc = frame.contentWindow.document;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    <title>${title}</title><style>
+      @page { size: A4 ${orientation}; margin: 0; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      .page { width: ${landscape ? '297mm' : '210mm'}; height: ${landscape ? '210mm' : '297mm'};
+        display: flex; justify-content: center; align-items: center; overflow: hidden;
+        page-break-after: always; break-after: page; }
+      .page:last-child { page-break-after: auto; break-after: auto; }
+      .page img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    </style></head><body>${pagesHtml}</body></html>`);
+  doc.close();
+
+  const printWindow = frame.contentWindow;
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    window.setTimeout(() => frame.remove(), 500);
+  };
+  printWindow.onafterprint = cleanup;
+
+  const images = Array.from(doc.images);
+  Promise.all(images.map(img => {
+    if (img.complete) return Promise.resolve();
+    return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+  })).then(() => {
+    window.setTimeout(() => {
+      try { printWindow.focus(); printWindow.print(); }
+      catch (error) { cleanup(); alert('Não foi possível abrir a impressão. Tente novamente.'); }
+    }, 150);
+  });
+  // Fallback para navegadores que não disparam afterprint.
+  window.setTimeout(cleanup, 120000);
+}
+
+$('print').addEventListener('click', () => {
+  const products = activeProducts();
+
+  if (!products.length) {
+    statusEl.textContent =
+      'Adicione pelo menos um produto antes de imprimir.';
+
+    return;
+  }
+
+  const invalid = products.find(
+    p => !p.name || p.price === null || !p.price
+  );
+
+  if (invalid) {
+    statusEl.textContent =
+      'Confira o nome e o preço dos produtos.';
+
+    return;
+  }
+
+  const count = Number(pageCountInput.value);
+  const canvases = [];
+
+  for (let i = 0; i < products.length; i += count) {
+    const cv = document.createElement('canvas');
+
+    // Impressão da Plaquinha sempre com fundo branco, independente da prévia.
+    renderSheet(
+      cv,
+      products.slice(i, i + count),
+      count,
+      false
+    );
+
+    canvases.push(cv);
+  }
+
+  printCanvases(
+    canvases,
+    count !== 2,
+    'Plaquinhas de preço'
+  );
+});
+
+
+$('printOffer').addEventListener('click', () => {
+  const products = offerProducts();
+
+  if (!products.length) {
+    offerStatus.textContent =
+      'Adicione pelo menos uma oferta antes de imprimir.';
+
+    return;
+  }
+
+  const invalid = products.find(
+    p => !p.name || p.price === null || !p.price
+  );
+
+  if (invalid) {
+    offerStatus.textContent =
+      'Preencha o nome e o preço de todas as ofertas.';
+
+    return;
+  }
+
+  const count = Number(offerPageCountInput.value);
+  const canvases = [];
+
+  for (let i = 0; i < products.length; i += count) {
+    const cv = document.createElement('canvas');
+
+    renderOfferSheet(
+      cv,
+      products.slice(i, i + count),
+      count,
+      true
+    );
+
+    canvases.push(cv);
+  }
+
+  printCanvases(
+    canvases,
+    count !== 2,
+    offerModelInput.value === 'promo' ? 'Ofertas - Promoção' : 'Ofertas do dia'
+  );
+});
+
+
+// ================= INICIALIZAÇÃO =================
+
+addProduct('ARROZ 5KG', '24,90');
+
+addOfferProduct('ARROZ 5KG', '24,90');
+
+drawSign();
+drawOffer();
+
+</script>
+</body>
+</html>
