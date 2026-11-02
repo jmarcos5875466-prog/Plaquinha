@@ -790,8 +790,12 @@ function selectMode(mode) {
 
   if (title) title.textContent = isPromocao ? 'Promoções por folha A4' : 'Ofertas por folha A4';
   currentOfferPage = 0;
-  drawSign();
-  drawOffer();
+  // Renderiza somente a tela ativa para evitar travamentos ao trocar de tipo.
+  if (isPlaquinha) {
+    drawSign();
+  } else {
+    drawOffer();
+  }
 }
 
 modePlaquinhaButton.addEventListener('click', () => selectMode('plaquinha'));
@@ -1203,8 +1207,9 @@ function renderSheet(targetCanvas, products, count, isPreview = false) {
 
   const landscape = count !== 2;
 
-  targetCanvas.width = landscape ? 3508 : 2480;
-  targetCanvas.height = landscape ? 2480 : 3508;
+  // A prévia usa resolução reduzida; impressão e PDF mantêm alta qualidade.
+  targetCanvas.width = isPreview ? (landscape ? 1500 : 1061) : (landscape ? 3508 : 2480);
+  targetCanvas.height = isPreview ? (landscape ? 1061 : 1500) : (landscape ? 2480 : 3508);
 
   // A folha A4 só mostra amarelo na prévia; impressão e PDF sempre ficam brancos.
   c.fillStyle = isPreview && paperColorInput.value === 'yellow'
@@ -1528,10 +1533,10 @@ function drawOfferTo(c, product, isPrinting = false) {
     // Mantém as pontas grandes e irregulares e não adiciona borda externa.
     const points = [
       [0.435,0.018],[0.475,0.115],[0.535,0.020],[0.575,0.145],
-      [0.685,0.025],[0.680,0.185],[0.825,0.065],[0.815,0.245],
-      [0.985,0.145],[0.865,0.325],[0.995,0.335],[0.875,0.455],
-      [0.995,0.505],[0.865,0.600],[0.975,0.720],[0.825,0.755],
-      [0.910,0.940],[0.760,0.855],[0.730,0.985],[0.640,0.860],
+      [0.685,0.025],[0.680,0.185],[0.805,0.065],[0.795,0.245],
+      [0.940,0.145],[0.845,0.325],[0.945,0.335],[0.855,0.455],
+      [0.945,0.505],[0.845,0.600],[0.930,0.720],[0.805,0.755],
+      [0.875,0.940],[0.760,0.855],[0.730,0.985],[0.640,0.860],
       [0.560,0.985],[0.490,0.865],[0.415,0.985],[0.350,0.860],
       [0.235,0.975],[0.215,0.845],[0.050,0.955],[0.125,0.790],
       [0.025,0.800],[0.120,0.650],[0.020,0.590],[0.125,0.510],
@@ -1663,8 +1668,10 @@ function renderOfferSheet(targetCanvas, products, count, isPrinting = false) {
   const c = targetCanvas.getContext('2d');
   const landscape = count !== 2;
 
-  targetCanvas.width = landscape ? 3508 : 2480;
-  targetCanvas.height = landscape ? 2480 : 3508;
+  // A prévia usa resolução reduzida; impressão e PDF mantêm alta qualidade.
+  const isPreview = !isPrinting;
+  targetCanvas.width = isPreview ? (landscape ? 1500 : 1061) : (landscape ? 3508 : 2480);
+  targetCanvas.height = isPreview ? (landscape ? 1061 : 1500) : (landscape ? 2480 : 3508);
 
   // A folha A4 só usa amarelo no preview; impressão e PDF sempre usam branco.
   c.fillStyle = !isPrinting && offerPaperColorInput.value === 'yellow'
@@ -2248,8 +2255,8 @@ addProduct('ARROZ 5KG', '24,90');
 
 addOfferProduct('ARROZ 5KG', '24,90');
 
+// Na abertura, desenha apenas a tela inicial. As outras são renderizadas ao selecionar.
 drawSign();
-drawOffer();
 
 </script>
 </body>
